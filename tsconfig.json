@@ -2,7 +2,13 @@
   "compilerOptions": {
     "strict": true,
     "target": "es5",
-    "module": "CommonJS",
+    "module": "UMD",
+    "lib": [
+      "ES5",
+      "ES2015.Promise",
+      "ES2020.Promise",
+      "DOM",
+    ],
     "outDir": "dist",
     "declaration": true,
     "declarationDir": "dist/typings",

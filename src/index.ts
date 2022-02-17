@@ -1,20 +1,8 @@
 export type PromiseFunc = () => Promise<any>;
 
-interface PromiseFulfilledResult<T> {
-  status: 'fulfilled';
-  value: T;
-}
-
-interface PromiseRejectedResult {
-  status: 'rejected';
-  reason: any;
-}
-
-type PromiseSettledResult<T = any> = PromiseFulfilledResult<T> | PromiseRejectedResult;
-
 export interface Options {
   limit?: number;
-  onAllFinish: (result: PromiseSettledResult[]) => void;
+  onAllFinish: (result: PromiseSettledResult<any>[]) => void;
 }
 
 export default class PromiseQueue {
@@ -27,7 +15,7 @@ export default class PromiseQueue {
   private results: any[] = [];
   private timer: undefined | number;
 
-  private onAllFinish?: (result: PromiseSettledResult[]) => void;
+  private onAllFinish?: (result: PromiseSettledResult<any>[]) => void;
 
   get total() {
     return this.queue.length;
@@ -69,17 +57,13 @@ export default class PromiseQueue {
     const fn = this.queue[this.current];
     this.current++;
     this.runningQueue.push(fn);
-    const promise = fn();
-    promise.
-      then((res) => {
-        this.resolveNext(fn, { status: 'fulfilled', value: res });
-      })
-      .catch((err) => {
-        this.resolveNext(fn, { status: 'rejected', reason: err });
-      });
+    const promise = Promise.allSettled([fn()]);
+    promise.then((res) => {
+      this.resolveNext(fn, res[0]);
+    });
   }
 
-  private resolveNext(fn: PromiseFunc, result: PromiseSettledResult) {
+  private resolveNext = (fn: PromiseFunc, result: PromiseSettledResult<any>) => {
     this.finishQueue.push(fn);
     const runningIndex = this.runningQueue.indexOf(fn);
     this.runningQueue.splice(runningIndex, 1);
